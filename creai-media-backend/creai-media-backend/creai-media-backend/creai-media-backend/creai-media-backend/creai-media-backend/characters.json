@@ -1,0 +1,32 @@
+{
+  "characters": [
+    {
+      "id": "founder_01",
+      "name": "Tech Founder",
+      "referenceImages": [
+        "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "defaultProvider": "memo",
+      "stylePrompt": "professional tech entrepreneur, modern office background, confident look",
+      "voice": "en_us_male_1",
+      "metadata": {
+        "role": "founder",
+        "age": "30s"
+      }
+    },
+    {
+      "id": "host_sarah",
+      "name": "Sarah (Host)",
+      "referenceImages": [
+        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1000&auto=format&fit=crop"
+      ],
+      "defaultProvider": "hunyuan",
+      "stylePrompt": "tv host, studio lighting, professional attire, friendly expression",
+      "voice": "en_us_female_2",
+      "metadata": {
+        "role": "host",
+        "age": "20s"
+      }
+    }
+  ]
+}
