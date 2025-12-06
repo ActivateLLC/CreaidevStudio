@@ -25,7 +25,7 @@ from typing import Optional, Literal, Dict, Any, List
 from datetime import datetime
 from enum import Enum
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import requests
@@ -140,6 +140,14 @@ class AudioGenerationRequest(BaseModel):
     provider: Optional[Provider] = Provider.OPENAI
     preset: Optional[str] = None
     params: Optional[Dict[str, Any]] = Field(default_factory=dict)
+
+
+class AudioFromYoutubeRequest(BaseModel):
+    url: str
+
+
+class AudioLiveStopRequest(BaseModel):
+    liveSessionId: str
 
 
 class ComposeRequest(BaseModel):
@@ -572,6 +580,98 @@ async def generate_audio(req: AudioGenerationRequest):
         createdAt=datetime.utcnow().isoformat(),
         error="TTS not yet implemented"
     )
+
+
+# ============================================================================
+# AUDIO MANAGEMENT (Upload, Live, YouTube)
+# ============================================================================
+
+@app.post("/audio/upload")
+async def upload_audio(file: UploadFile = File(...)):
+    """Upload an audio file (clip)"""
+    file_id = str(uuid.uuid4())
+    ext = file.filename.split(".")[-1] if "." in file.filename else "wav"
+    filename = f"audio_{file_id}.{ext}"
+    filepath = MEDIA_DIR / filename
+    
+    with open(filepath, "wb") as f:
+        content = await file.read()
+        f.write(content)
+    
+    # TODO: Run ASR (Whisper) here to get transcript
+    transcript = "Transcript generation not yet implemented"
+    
+    return {
+        "audioId": file_id,
+        "audioUrl": f"/media/{filename}",
+        "transcript": transcript,
+        "duration": 0.0 # TODO: Get duration
+    }
+
+
+@app.post("/audio/from-youtube")
+async def audio_from_youtube(req: AudioFromYoutubeRequest):
+    """Import audio from YouTube"""
+    # TODO: Implement yt-dlp
+    return {
+        "audioId": str(uuid.uuid4()),
+        "audioUrl": "/media/placeholder_youtube.mp3",
+        "transcript": "YouTube import not yet implemented",
+        "duration": 0.0
+    }
+
+
+# Live Audio Session Manager
+live_sessions: Dict[str, Path] = {}
+
+@app.post("/audio/live/start")
+async def start_live_audio():
+    """Start a live audio recording session"""
+    session_id = str(uuid.uuid4())
+    session_file = MEDIA_DIR / f"live_{session_id}.webm" # WebM is common for browser recording
+    live_sessions[session_id] = session_file
+    
+    # Create empty file
+    with open(session_file, "wb") as f:
+        pass
+        
+    return {"liveSessionId": session_id}
+
+
+@app.post("/audio/live/chunk")
+async def live_audio_chunk(liveSessionId: str = Form(...), chunk: UploadFile = File(...)):
+    """Append a chunk to the live session"""
+    if liveSessionId not in live_sessions:
+        raise HTTPException(status_code=404, detail="Live session not found")
+    
+    filepath = live_sessions[liveSessionId]
+    
+    # Append chunk
+    with open(filepath, "ab") as f:
+        content = await chunk.read()
+        f.write(content)
+        
+    return {"status": "appended"}
+
+
+@app.post("/audio/live/stop")
+async def stop_live_audio(req: AudioLiveStopRequest):
+    """Stop live session and finalize audio"""
+    if req.liveSessionId not in live_sessions:
+        raise HTTPException(status_code=404, detail="Live session not found")
+    
+    filepath = live_sessions[req.liveSessionId]
+    del live_sessions[req.liveSessionId]
+    
+    # TODO: Convert WebM to WAV/MP3 if needed
+    # TODO: Run ASR
+    
+    return {
+        "audioId": req.liveSessionId,
+        "audioUrl": f"/media/{filepath.name}",
+        "transcript": "Live session transcript placeholder",
+        "duration": 0.0
+    }
 
 
 @app.post("/compose", response_model=GenerationResponse)

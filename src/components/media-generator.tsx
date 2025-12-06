@@ -26,8 +26,9 @@ import {
   generateAvatar,
   generateImage,
 } from "@/lib/media-backend";
-import { Image, Loader2, MessageSquare, User, Video } from "lucide-react";
+import { Image, Loader2, MessageSquare, Mic, User, Video } from "lucide-react";
 import { useState } from "react";
+import { AddMediaDialog } from "./add-media";
 
 interface MediaGeneratorProps {
   onMediaGenerated?: (url: string, type: "image" | "video" | "audio") => void;
@@ -295,12 +296,26 @@ export function MediaGenerator({ onMediaGenerated }: MediaGeneratorProps) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="th-audio">Audio URL</Label>
-                <Input
-                  id="th-audio"
-                  placeholder="https://example.com/audio.wav"
-                  value={talkingHeadAudio}
-                  onChange={(e) => setTalkingHeadAudio(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="th-audio"
+                    placeholder="https://example.com/audio.wav"
+                    value={talkingHeadAudio}
+                    onChange={(e) => setTalkingHeadAudio(e.target.value)}
+                  />
+                  <AddMediaDialog
+                    trigger={
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        title="Add Audio Source"
+                      >
+                        <Mic className="h-4 w-4" />
+                      </Button>
+                    }
+                    onMediaAdded={(url) => setTalkingHeadAudio(url)}
+                  />
+                </div>
               </div>
               <Button
                 onClick={handleGenerateTalkingHead}
@@ -335,27 +350,43 @@ export function MediaGenerator({ onMediaGenerated }: MediaGeneratorProps) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="avatar-audio">Audio URL</Label>
-                <Input
-                  id="avatar-audio"
-                  placeholder="https://example.com/speech.wav"
-                  value={avatarAudio}
-                  onChange={(e) => setAvatarAudio(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="avatar-audio"
+                    placeholder="https://example.com/speech.wav"
+                    value={avatarAudio}
+                    onChange={(e) => setAvatarAudio(e.target.value)}
+                  />
+                  <AddMediaDialog
+                    trigger={
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        title="Add Audio Source"
+                      >
+                        <Mic className="h-4 w-4" />
+                      </Button>
+                    }
+                    onMediaAdded={(url) => setAvatarAudio(url)}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="avatar-style">Avatar Style</Label>
                 <Select
                   value={avatarMode}
-                  onValueChange={(value) =>
-                    setAvatarMode(value as AvatarMode)
-                  }
+                  onValueChange={(value) => setAvatarMode(value as AvatarMode)}
                 >
                   <SelectTrigger id="avatar-style">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={AvatarMode.FULL_BODY}>Full Body</SelectItem>
-                    <SelectItem value={AvatarMode.UPPER_BODY}>Upper Body</SelectItem>
+                    <SelectItem value={AvatarMode.FULL_BODY}>
+                      Full Body
+                    </SelectItem>
+                    <SelectItem value={AvatarMode.UPPER_BODY}>
+                      Upper Body
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

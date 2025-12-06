@@ -53,7 +53,7 @@ export function CharacterPanel() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to create character: " + error.message,
+        description: `Failed to create character: ${error.message}`,
         variant: "destructive",
       });
     },
@@ -106,7 +106,12 @@ export function CharacterPanel() {
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" name="name" required placeholder="e.g. Sarah" />
+                <Input
+                  id="name"
+                  name="name"
+                  required
+                  placeholder="e.g. Sarah"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="provider">Default Provider</Label>

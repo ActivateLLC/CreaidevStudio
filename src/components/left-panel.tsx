@@ -38,6 +38,7 @@ import { useEffect, useState } from "react";
 
 const DEFAULT_TIMELINE_DURATION_MS = PROJECT_PLACEHOLDER.duration ?? 30000;
 const MIN_TIMELINE_DURATION_MS = 1000;
+import { AddMediaDialog } from "./add-media";
 import { CharacterPanel } from "./character-panel";
 import { MediaItemPanel } from "./media-panel";
 import { ProjectStatsDialog } from "./project-stats-dialog";
@@ -65,7 +66,9 @@ export default function LeftPanel() {
   const { data: composition } = useVideoComposition(projectId);
   const projectUpdate = useProjectUpdater(projectId);
   const [mediaType, setMediaType] = useState("all");
-  const [activeTab, setActiveTab] = useState<"gallery" | "characters">("gallery");
+  const [activeTab, setActiveTab] = useState<"gallery" | "characters">(
+    "gallery",
+  );
   const queryClient = useQueryClient();
 
   const { data: mediaItems = [], isLoading } = useProjectMediaItems(projectId);
@@ -199,6 +202,24 @@ export default function LeftPanel() {
           });
       }
     }
+  };
+
+  const handleAudioAdded = async (url: string, type: "audio") => {
+    const data: Omit<MediaItem, "id"> = {
+      projectId,
+      kind: "generated",
+      createdAt: Date.now(),
+      mediaType: "music",
+      status: "completed",
+      url: url,
+      metadata: {
+        duration: 0,
+      },
+    };
+    await db.media.create(data);
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.projectMediaItems(projectId),
+    });
   };
 
   return (
@@ -394,6 +415,7 @@ export default function LeftPanel() {
                     )}
                   </label>
                 </Button>
+                <AddMediaDialog onMediaAdded={handleAudioAdded} />
                 <ProjectStatsDialog />
               </div>
               {mediaItems.length > 0 && (
@@ -409,7 +431,7 @@ export default function LeftPanel() {
             </>
           )}
         </div>
-        
+
         {activeTab === "gallery" && (
           <>
             {!isLoading && mediaItems.length === 0 && (

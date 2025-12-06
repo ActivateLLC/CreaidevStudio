@@ -535,6 +535,7 @@ function ModelEndpointPicker({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
+            // biome-ignore lint/a11y/useSemanticElements: Custom combobox trigger
             role="combobox"
             aria-expanded={open}
             className="w-full justify-between h-auto py-2.5 px-3"
