@@ -12,7 +12,40 @@ services:
     environment:
       - NODE_ENV=development
       - WATCHPACK_POLLING=true
+      - NEXT_PUBLIC_MEDIA_BACKEND_URL=http://localhost:8000
     stdin_open: true
     tty: true
     restart: unless-stopped
+    depends_on:
+      - media-backend
+
+  media-backend:
+    build:
+      context: ./creai-media-backend
+      dockerfile: Dockerfile
+    container_name: creai-media-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./creai-media-backend:/app
+      - media-storage:/app/media
+      - model-cache:/root/.cache  # Cache HuggingFace models
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - MEDIA_DIR=/app/media
+      - MEMO_PATH=./memo
+      - AVATAR_PATH=./creaiVideo-Avatar
+    restart: unless-stopped
+    # Uncomment for GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  media-storage:
+  model-cache:
 
