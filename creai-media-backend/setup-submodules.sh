@@ -56,6 +56,9 @@ fi
 
 source venv/bin/activate
 
+# Upgrade pip and install build tools
+pip install --upgrade pip setuptools wheel
+
 # Install backend dependencies
 echo "3️⃣ Installing backend dependencies..."
 pip install -q -r requirements.txt
