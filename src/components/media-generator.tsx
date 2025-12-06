@@ -1,10 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +9,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,15 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
-  generateSceneImage,
-  generateTalkingHead,
-  generateFullBodyAvatar,
-  generateTTS,
-  animateImage,
+  AvatarMode,
+  generateAudio,
+  generateAvatar,
+  generateImage,
 } from "@/lib/media-backend";
-import { Loader2, Image, Video, MessageSquare, User } from "lucide-react";
+import { Image, Loader2, MessageSquare, User, Video } from "lucide-react";
+import { useState } from "react";
 
 interface MediaGeneratorProps {
   onMediaGenerated?: (url: string, type: "image" | "video" | "audio") => void;
@@ -52,8 +51,8 @@ export function MediaGenerator({ onMediaGenerated }: MediaGeneratorProps) {
   // Avatar state
   const [avatarImage, setAvatarImage] = useState("");
   const [avatarAudio, setAvatarAudio] = useState("");
-  const [avatarStyle, setAvatarStyle] = useState<"full-body" | "upper-body">(
-    "full-body"
+  const [avatarMode, setAvatarMode] = useState<AvatarMode>(
+    AvatarMode.FULL_BODY,
   );
 
   // TTS state
@@ -71,12 +70,14 @@ export function MediaGenerator({ onMediaGenerated }: MediaGeneratorProps) {
 
     setIsLoading(true);
     try {
-      const result = await generateSceneImage({ prompt: scenePrompt });
+      const result = await generateImage({ prompt: scenePrompt });
       toast({
         title: "Scene Generated",
         description: "Your scene image has been created",
       });
-      onMediaGenerated?.(result.imageUrl, "image");
+      if (result.mediaUrl) {
+        onMediaGenerated?.(result.mediaUrl, "image");
+      }
       setIsOpen(false);
       setScenePrompt("");
     } catch (error) {
@@ -102,7 +103,8 @@ export function MediaGenerator({ onMediaGenerated }: MediaGeneratorProps) {
 
     setIsLoading(true);
     try {
-      const result = await generateTalkingHead({
+      const result = await generateAvatar({
+        mode: AvatarMode.HEAD,
         imageUrl: talkingHeadImage,
         audioUrl: talkingHeadAudio,
       });
@@ -110,7 +112,9 @@ export function MediaGenerator({ onMediaGenerated }: MediaGeneratorProps) {
         title: "Talking Head Generated",
         description: "Your talking-head video has been created",
       });
-      onMediaGenerated?.(result.videoUrl, "video");
+      if (result.mediaUrl) {
+        onMediaGenerated?.(result.mediaUrl, "video");
+      }
       setIsOpen(false);
       setTalkingHeadImage("");
       setTalkingHeadAudio("");
@@ -137,16 +141,18 @@ export function MediaGenerator({ onMediaGenerated }: MediaGeneratorProps) {
 
     setIsLoading(true);
     try {
-      const result = await generateFullBodyAvatar({
+      const result = await generateAvatar({
+        mode: avatarMode,
         imageUrl: avatarImage,
         audioUrl: avatarAudio,
-        style: avatarStyle,
       });
       toast({
         title: "Avatar Generated",
-        description: `Your ${avatarStyle} avatar video has been created`,
+        description: `Your ${avatarMode} avatar video has been created`,
       });
-      onMediaGenerated?.(result.videoUrl, "video");
+      if (result.mediaUrl) {
+        onMediaGenerated?.(result.mediaUrl, "video");
+      }
       setIsOpen(false);
       setAvatarImage("");
       setAvatarAudio("");
@@ -173,18 +179,21 @@ export function MediaGenerator({ onMediaGenerated }: MediaGeneratorProps) {
 
     setIsLoading(true);
     try {
-      const result = await generateTTS({ text: ttsText });
+      const result = await generateAudio({ text: ttsText });
       toast({
         title: "TTS Generated",
         description: "Your audio has been created",
       });
-      onMediaGenerated?.(result.audioUrl, "audio");
+      if (result.mediaUrl) {
+        onMediaGenerated?.(result.mediaUrl, "audio");
+      }
       setIsOpen(false);
       setTtsText("");
     } catch (error) {
       toast({
         title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Not yet implemented",
+        description:
+          error instanceof Error ? error.message : "Not yet implemented",
         variant: "destructive",
       });
     } finally {
@@ -336,17 +345,17 @@ export function MediaGenerator({ onMediaGenerated }: MediaGeneratorProps) {
               <div className="space-y-2">
                 <Label htmlFor="avatar-style">Avatar Style</Label>
                 <Select
-                  value={avatarStyle}
+                  value={avatarMode}
                   onValueChange={(value) =>
-                    setAvatarStyle(value as "full-body" | "upper-body")
+                    setAvatarMode(value as AvatarMode)
                   }
                 >
                   <SelectTrigger id="avatar-style">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="full-body">Full Body</SelectItem>
-                    <SelectItem value="upper-body">Upper Body</SelectItem>
+                    <SelectItem value={AvatarMode.FULL_BODY}>Full Body</SelectItem>
+                    <SelectItem value={AvatarMode.UPPER_BODY}>Upper Body</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

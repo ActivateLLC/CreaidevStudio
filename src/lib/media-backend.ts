@@ -1,193 +1,140 @@
 /**
  * Creai Media Backend Client
- * Client-side functions for calling the media generation backend
+ * Client-side functions for calling the task-based media generation backend
  */
 
 const MEDIA_BACKEND_URL = process.env.NEXT_PUBLIC_MEDIA_BACKEND_URL || "http://localhost:8000";
 
-export interface SceneImageOptions {
+export enum Provider {
+  FLUX = "flux",
+  FAL = "fal",
+  MEMO = "memo",
+  HUNYUAN = "hunyuan",
+  OPENAI = "openai",
+  ELEVENLABS = "elevenlabs",
+  SVD = "svd",
+}
+
+export enum TaskType {
+  IMAGE = "image",
+  VIDEO = "video",
+  AVATAR = "avatar",
+  AUDIO = "audio",
+  COMPOSE = "compose",
+}
+
+export enum AvatarMode {
+  HEAD = "head",
+  UPPER_BODY = "upper_body",
+  FULL_BODY = "full_body",
+}
+
+export interface Character {
+  id: string;
+  name: string;
+  referenceImages: string[];
+  defaultProvider: Provider;
+  stylePrompt?: string;
+  voice?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface GenerationResponse {
+  jobId: string;
+  status: "pending" | "processing" | "completed" | "failed";
+  taskType: TaskType;
+  provider: Provider;
+  mediaUrl?: string;
+  recipe: any;
+  createdAt: string;
+  completedAt?: string;
+  error?: string;
+}
+
+// --- API Functions ---
+
+/**
+ * List all characters
+ */
+export async function listCharacters(): Promise<{ characters: Character[] }> {
+  const response = await fetch(`${MEDIA_BACKEND_URL}/characters`);
+  if (!response.ok) throw new Error("Failed to fetch characters");
+  return response.json();
+}
+
+/**
+ * Create a new character
+ */
+export async function createCharacter(character: Character): Promise<Character> {
+  const response = await fetch(`${MEDIA_BACKEND_URL}/characters`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(character),
+  });
+  if (!response.ok) throw new Error("Failed to create character");
+  return response.json();
+}
+
+/**
+ * Generate an image (Scene)
+ */
+export async function generateImage(params: {
   prompt: string;
+  characterId?: string;
+  provider?: Provider;
   width?: number;
   height?: number;
-  num_inference_steps?: number;
-  guidance_scale?: number;
+  seed?: number;
+}): Promise<GenerationResponse> {
+  const response = await fetch(`${MEDIA_BACKEND_URL}/generate/image`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) throw new Error("Image generation failed");
+  return response.json();
 }
 
-export interface SceneImageResult {
-  imageUrl: string;
-  filename: string;
+/**
+ * Generate an avatar video
+ */
+export async function generateAvatar(params: {
+  mode: AvatarMode;
+  characterId?: string;
+  imageUrl?: string;
+  audioUrl?: string;
+  script?: string;
+  provider?: Provider;
+}): Promise<GenerationResponse> {
+  const response = await fetch(`${MEDIA_BACKEND_URL}/generate/avatar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) throw new Error("Avatar generation failed");
+  return response.json();
 }
 
-export interface TalkingHeadOptions {
-  imageUrl: string;
-  audioUrl: string;
-  duration?: number;
-}
-
-export interface AvatarOptions {
-  imageUrl: string;
-  audioUrl: string;
-  style?: "full-body" | "upper-body";
-}
-
-export interface MediaResult {
-  videoUrl: string;
-  filename: string;
-}
-
-export interface TTSOptions {
+/**
+ * Generate audio (TTS)
+ */
+export async function generateAudio(params: {
   text: string;
+  characterId?: string;
   voice?: string;
-  speed?: number;
-}
-
-export interface TTSResult {
-  audioUrl: string;
-  filename: string;
-}
-
-export interface AnimateImageOptions {
-  imageUrl: string;
-  duration?: number;
-  fps?: number;
-}
-
-/**
- * Generate a scene image using FLUX.2-dev
- */
-export async function generateSceneImage(
-  options: SceneImageOptions
-): Promise<SceneImageResult> {
-  const response = await fetch(`${MEDIA_BACKEND_URL}/scene-image`, {
+  provider?: Provider;
+}): Promise<GenerationResponse> {
+  const response = await fetch(`${MEDIA_BACKEND_URL}/generate/audio`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      prompt: options.prompt,
-      width: options.width || 1024,
-      height: options.height || 1024,
-      num_inference_steps: options.num_inference_steps || 50,
-      guidance_scale: options.guidance_scale || 7.5,
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Scene image generation failed");
-  }
-
+  if (!response.ok) throw new Error("Audio generation failed");
   return response.json();
 }
 
 /**
- * Generate a talking-head video from image and audio
- * Uses memo (ActivateLLC/memo) for close-up face/upper-body animation
- */
-export async function generateTalkingHead(
-  options: TalkingHeadOptions
-): Promise<MediaResult> {
-  const response = await fetch(`${MEDIA_BACKEND_URL}/talking-head`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      imageUrl: options.imageUrl,
-      audioUrl: options.audioUrl,
-      duration: options.duration,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Talking-head generation failed");
-  }
-
-  return response.json();
-}
-
-/**
- * Generate a full-body or upper-body avatar video
- * Uses HunyuanVideo-Avatar (ActivateLLC/creaiVideo-Avatar)
- */
-export async function generateFullBodyAvatar(
-  options: AvatarOptions
-): Promise<MediaResult> {
-  const response = await fetch(`${MEDIA_BACKEND_URL}/avatar-fullbody`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      imageUrl: options.imageUrl,
-      audioUrl: options.audioUrl,
-      style: options.style || "full-body",
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Avatar generation failed");
-  }
-
-  return response.json();
-}
-
-/**
- * Generate text-to-speech audio
- * TODO: Will be implemented once TTS service is chosen
- */
-export async function generateTTS(options: TTSOptions): Promise<TTSResult> {
-  const response = await fetch(`${MEDIA_BACKEND_URL}/tts`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      text: options.text,
-      voice: options.voice || "default",
-      speed: options.speed || 1.0,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "TTS generation failed");
-  }
-
-  return response.json();
-}
-
-/**
- * Animate a static image to video
- * TODO: Will be implemented with Stable Video Diffusion or FAL img2vid
- */
-export async function animateImage(
-  options: AnimateImageOptions
-): Promise<MediaResult> {
-  const response = await fetch(`${MEDIA_BACKEND_URL}/animate-image`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      imageUrl: options.imageUrl,
-      duration: options.duration || 3.0,
-      fps: options.fps || 24,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Image animation failed");
-  }
-
-  return response.json();
-}
-
-/**
- * Check if media backend is available
+ * Check backend health
  */
 export async function checkMediaBackendHealth(): Promise<boolean> {
   try {

@@ -31,12 +31,14 @@ import {
   MicIcon,
   MusicIcon,
   SparklesIcon,
+  UsersIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 const DEFAULT_TIMELINE_DURATION_MS = PROJECT_PLACEHOLDER.duration ?? 30000;
 const MIN_TIMELINE_DURATION_MS = 1000;
+import { CharacterPanel } from "./character-panel";
 import { MediaItemPanel } from "./media-panel";
 import { ProjectStatsDialog } from "./project-stats-dialog";
 import {
@@ -63,6 +65,7 @@ export default function LeftPanel() {
   const { data: composition } = useVideoComposition(projectId);
   const projectUpdate = useProjectUpdater(projectId);
   const [mediaType, setMediaType] = useState("all");
+  const [activeTab, setActiveTab] = useState<"gallery" | "characters">("gallery");
   const queryClient = useQueryClient();
 
   const { data: mediaItems = [], isLoading } = useProjectMediaItems(projectId);
@@ -298,114 +301,142 @@ export default function LeftPanel() {
       </div>
       <div className="flex-1 py-4 flex flex-col gap-4 border-b border-border h-full overflow-hidden relative">
         <div className="flex flex-row items-center gap-2 px-4">
-          <h2 className="text-sm text-muted-foreground font-semibold flex-1">
-            {t("gallery")}
-          </h2>
-          <div className="flex gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="px-2">
-                  <ListPlusIcon className="w-4 h-4 opacity-50" />
-                  <span className="capitalize">{mediaType}</span>
-                  <ChevronDown className="w-4 h-4 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="bottom" align="start">
-                <DropdownMenuItem
-                  className="text-sm"
-                  onClick={() => setMediaType("all")}
-                >
-                  <GalleryVerticalIcon className="w-4 h-4 opacity-50" />
-                  {t("all")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-sm"
-                  onClick={() => setMediaType("image")}
-                >
-                  <ImageIcon className="w-4 h-4 opacity-50" />
-                  {t("image")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-sm"
-                  onClick={() => setMediaType("music")}
-                >
-                  <MusicIcon className="w-4 h-4 opacity-50" />
-                  {t("music")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-sm"
-                  onClick={() => setMediaType("voiceover")}
-                >
-                  <MicIcon className="w-4 h-4 opacity-50" />
-                  {t("voiceover")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-sm"
-                  onClick={() => setMediaType("video")}
-                >
-                  <FilmIcon className="w-4 h-4 opacity-50" />
-                  {t("video")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg">
             <Button
-              variant="secondary"
+              variant={activeTab === "gallery" ? "secondary" : "ghost"}
               size="sm"
-              disabled={isUploading}
-              className="cursor-pointer disabled:cursor-default disabled:opacity-50"
-              asChild
+              className="h-7 text-xs"
+              onClick={() => setActiveTab("gallery")}
             >
-              <label htmlFor="fileUploadButton">
-                <Input
-                  id="fileUploadButton"
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                  multiple={false}
-                  disabled={isUploading}
-                  accept="image/*,audio/*,video/*"
-                />
-                {isUploading ? (
-                  <LoaderCircleIcon className="w-4 h-4 opacity-50 animate-spin" />
-                ) : (
-                  <CloudUploadIcon className="w-4 h-4 opacity-50" />
-                )}
-              </label>
+              {t("gallery")}
             </Button>
-            <ProjectStatsDialog />
+            <Button
+              variant={activeTab === "characters" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setActiveTab("characters")}
+            >
+              <UsersIcon className="w-3 h-3 mr-1" />
+              Characters
+            </Button>
           </div>
-          {mediaItems.length > 0 && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => openGenerateDialog()}
-            >
-              <SparklesIcon className="w-4 h-4 opacity-50" />
-              {t("generate")}
-            </Button>
+          <div className="flex-1" />
+          {activeTab === "gallery" && (
+            <>
+              <div className="flex gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="px-2">
+                      <ListPlusIcon className="w-4 h-4 opacity-50" />
+                      <span className="capitalize">{mediaType}</span>
+                      <ChevronDown className="w-4 h-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="bottom" align="start">
+                    <DropdownMenuItem
+                      className="text-sm"
+                      onClick={() => setMediaType("all")}
+                    >
+                      <GalleryVerticalIcon className="w-4 h-4 opacity-50" />
+                      {t("all")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-sm"
+                      onClick={() => setMediaType("image")}
+                    >
+                      <ImageIcon className="w-4 h-4 opacity-50" />
+                      {t("image")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-sm"
+                      onClick={() => setMediaType("music")}
+                    >
+                      <MusicIcon className="w-4 h-4 opacity-50" />
+                      {t("music")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-sm"
+                      onClick={() => setMediaType("voiceover")}
+                    >
+                      <MicIcon className="w-4 h-4 opacity-50" />
+                      {t("voiceover")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-sm"
+                      onClick={() => setMediaType("video")}
+                    >
+                      <FilmIcon className="w-4 h-4 opacity-50" />
+                      {t("video")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={isUploading}
+                  className="cursor-pointer disabled:cursor-default disabled:opacity-50"
+                  asChild
+                >
+                  <label htmlFor="fileUploadButton">
+                    <Input
+                      id="fileUploadButton"
+                      type="file"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      multiple={false}
+                      disabled={isUploading}
+                      accept="image/*,audio/*,video/*"
+                    />
+                    {isUploading ? (
+                      <LoaderCircleIcon className="w-4 h-4 opacity-50 animate-spin" />
+                    ) : (
+                      <CloudUploadIcon className="w-4 h-4 opacity-50" />
+                    )}
+                  </label>
+                </Button>
+                <ProjectStatsDialog />
+              </div>
+              {mediaItems.length > 0 && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => openGenerateDialog()}
+                >
+                  <SparklesIcon className="w-4 h-4 opacity-50" />
+                  {t("generate")}
+                </Button>
+              )}
+            </>
           )}
         </div>
-        {!isLoading && mediaItems.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center gap-4 px-4">
-            <p className="text-sm text-center">{t("emptyMessage")}</p>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => openGenerateDialog()}
-            >
-              <ImagePlusIcon className="w-4 h-4 opacity-50" />
-              {t("generate")}
-            </Button>
-          </div>
+        
+        {activeTab === "gallery" && (
+          <>
+            {!isLoading && mediaItems.length === 0 && (
+              <div className="h-full flex flex-col items-center justify-center gap-4 px-4">
+                <p className="text-sm text-center">{t("emptyMessage")}</p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => openGenerateDialog()}
+                >
+                  <ImagePlusIcon className="w-4 h-4 opacity-50" />
+                  {t("generate")}
+                </Button>
+              </div>
+            )}
+
+            {mediaItems.length > 0 && (
+              <MediaItemPanel
+                data={mediaItems}
+                mediaType={mediaType}
+                className="overflow-y-auto"
+              />
+            )}
+          </>
         )}
 
-        {mediaItems.length > 0 && (
-          <MediaItemPanel
-            data={mediaItems}
-            mediaType={mediaType}
-            className="overflow-y-auto"
-          />
-        )}
+        {activeTab === "characters" && <CharacterPanel />}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background to-transparent via-background via-60% h-8 pointer-events-none" />
       </div>
     </div>
