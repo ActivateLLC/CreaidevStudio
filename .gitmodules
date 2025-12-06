@@ -1,0 +1,6 @@
+[submodule "creai-media-backend/memo"]
+	path = creai-media-backend/memo
+	url = https://github.com/ActivateLLC/memo.git
+[submodule "creai-media-backend/creaiVideo-Avatar"]
+	path = creai-media-backend/creaiVideo-Avatar
+	url = https://github.com/ActivateLLC/creaiVideo-Avatar.git
